@@ -10,6 +10,7 @@
  */
 namespace Philip;
 
+use Pimple;
 use Philip\EventListener;
 use Philip\IRC\Event;
 use Philip\IRC\Request;
@@ -19,11 +20,11 @@ use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\NullHandler;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Pimple;
 
 /**
  * A Slim-inspired IRC bot.
  *
+ * @package philip
  * @author Bill Israel <bill.israel@gmail.com>
  */
 class Philip extends Pimple
@@ -31,7 +32,7 @@ class Philip extends Pimple
     /** @var resource $socket The socket for communicating with the IRC server */
     private $socket;
 
-    /** @var EventDispatcher $dispatcher The event mediator */
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcher $dispatcher The event dispatcher */
     private $dispatcher;
 
     /** @var string $pidfile The location to write to, if write_pidfile is enabled */
@@ -55,15 +56,14 @@ class Philip extends Pimple
      */
     public function __destruct()
     {
-        if (isset($this->socket)) {
+        if (is_resource($this->socket)) {
             fclose($this->socket);
         }
 
-        if (isset($this->config['write_pidfile']) && $this->config['write_pidfile']) {
+        if (isset($this['write_pidfile']) && $this['write_pidfile']) {
             unlink($this->pidfile);
         }
     }
-
 
     /**
      * Adds an event handler to the list for when someone talks in a channel.
@@ -147,26 +147,6 @@ class Philip extends Pimple
     }
 
     /**
-     * Return the configuration so plugins and external things can use it.
-     *
-     * @return array The bot's current configuration
-     */
-    public function getConfig()
-    {
-        return $this->config;
-    }
-
-    /**
-     * Returns the logger, in case any handlers need to log.
-     *
-     * @return Logger An instance of a Monolog logger
-     */
-    public function getLogger()
-    {
-        return $this->log;
-    }
-
-    /**
      * Returns the location of the pid file.
      *
      * @return mixed Read-only file resource, or null if there was an error opening the file
@@ -185,7 +165,7 @@ class Philip extends Pimple
     /**
      * Loads a plugin. See the README for plugin documentation.
      *
-     * @param string $name The fully-qualified classname of the plugin to load
+     * @param string $classname The fully-qualified classname of the plugin to load
      *
      * @throws \InvalidArgumentException
      */
@@ -203,7 +183,7 @@ class Philip extends Pimple
     /**
      * Loads multiple plugins in a single call.
      *
-     * @param array $names The fully-qualified classnames of the plugins to load.
+     * @param array $classnames The fully-qualified classnames of the plugins to load.
      */
     public function loadPlugins($classnames)
     {
@@ -231,6 +211,8 @@ class Philip extends Pimple
             $this->login();
             $this->join();
             $this->listen();
+        } else {
+            die('Unable to connect to IRC server.' . PHP_EOL);
         }
     }
 
@@ -282,8 +264,8 @@ class Philip extends Pimple
         do {
             $data = fgets($this->socket, 512);
             if (!empty($data)) {
-                $request   = $this->receive($data);
-                $cmd       = strtolower($request->getCommand());
+                $request = $this->receive($data);
+                $cmd = strtolower($request->getCommand());
 
                 if ($cmd === 'privmsg') {
                     $event_name = 'message.' . ($request->isPrivateMessage() ? 'private' : 'channel');
@@ -322,7 +304,7 @@ class Philip extends Pimple
     /**
      * Actually push data back into the socket (giggity).
      *
-     * @param array $responses The responses to send back to the server
+     * @param mixed $responses The response(s) to send back to the server
      */
     private function send($responses)
     {
@@ -367,7 +349,7 @@ class Philip extends Pimple
                 $handler->setFormatter(new LineFormatter($format));
                 $this['logger']->pushHandler($handler);
             } catch (\Exception $e) {
-                throw \Exception("Unable to open/read log file.");
+                die("Unable to open/read log file.");
             }
         } else {
             $this['logger']->pushHandler(new NullHandler());
@@ -394,7 +376,7 @@ class Philip extends Pimple
                 fwrite($pidfile, getmypid());
                 fclose($pidfile);
             } else {
-                throw new \Exception('Unable to open pidfile for writing.');
+                die('Unable to open pidfile for writing.');
             }
         }
     }
