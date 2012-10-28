@@ -19,25 +19,20 @@ use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\NullHandler;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Pimple;
 
 /**
  * A Slim-inspired IRC bot.
  *
  * @author Bill Israel <bill.israel@gmail.com>
  */
-class Philip
+class Philip extends Pimple
 {
-    /** @var array $config The bot's configuration */
-    private $config;
-
     /** @var resource $socket The socket for communicating with the IRC server */
     private $socket;
 
     /** @var EventDispatcher $dispatcher The event mediator */
     private $dispatcher;
-
-    /** @var Logger $log The log to write to, if debug is enabled */
-    private $log;
 
     /** @var string $pidfile The location to write to, if write_pidfile is enabled */
     private $pidfile;
@@ -49,7 +44,7 @@ class Philip
      */
     public function __construct($config = array())
     {
-        $this->config = $config;
+        parent::__construct($config);
         $this->dispatcher = new EventDispatcher();
         $this->initialize();
     }
@@ -224,7 +219,7 @@ class Philip
      * @return boolean True if the user is an admin, false otherwise
      */
     public function isAdmin($user) {
-        return in_array($user, $this->config['admins']);
+        return in_array($user, $this['admins']);
     }
 
     /**
@@ -247,7 +242,7 @@ class Philip
     private function connect()
     {
         stream_set_blocking(STDIN, 0);
-        $this->socket = fsockopen($this->config['hostname'], $this->config['port']);
+        $this->socket = fsockopen($this['hostname'], $this['port']);
         return (bool) $this->socket;
     }
 
@@ -256,12 +251,12 @@ class Philip
      */
     private function login()
     {
-        $this->send(Response::nick($this->config['nick']));
+        $this->send(Response::nick($this['nick']));
         $this->send(Response::user(
-            $this->config['nick'],
-            $this->config['hostname'],
-            $this->config['servername'],
-            $this->config['realname']
+            $this['nick'],
+            $this['hostname'],
+            $this['servername'],
+            $this['realname']
         ));
     }
 
@@ -270,11 +265,11 @@ class Philip
      */
     private function join()
     {
-        if (!is_array($this->config['channels'])) {
-            $this->config['channels'] = array($this->config['channels']);
+        if (!is_array($this['channels'])) {
+            $this['channels'] = array($this['channels']);
         }
 
-        foreach ($this->config['channels'] as $channel) {
+        foreach ($this['channels'] as $channel) {
             $this->send(Response::join($channel));
         }
     }
@@ -297,7 +292,7 @@ class Philip
                 }
 
                 // Skip processing if the incoming message is from the bot
-                if ($request->getSendingUser() === $this->config['nick']) {
+                if ($request->getSendingUser() === $this['nick']) {
                     continue;
                 }
 
@@ -320,7 +315,7 @@ class Philip
      */
     private function receive($raw)
     {
-        $this->log->debug('--> ' . $raw);
+        $this['logger']->debug('--> ' . $raw);
         return new Request($raw);
     }
 
@@ -338,7 +333,7 @@ class Philip
         foreach ($responses as $response) {
             $response .= "\r\n";
             fwrite($this->socket, $response);
-            $this->log->debug('<-- ' . $response);
+            $this['logger']->debug('<-- ' . $response);
         }
     }
 
@@ -357,9 +352,10 @@ class Philip
      */
     private function setupLogger()
     {
-        $this->log = new Logger('philip');
-        if (isset($this->config['debug']) && $this->config['debug'] == true) {
-            $log_path = isset($this->config['log']) ? $this->config['log'] : false;
+        $this['logger'] = new Logger('philip');
+
+        if (isset($this['debug']) && $this['debug'] == true) {
+            $log_path = isset($this['log']) ? $this['log'] : false;
 
             if (!$log_path) {
                 throw new \Exception("If debug is enabled, you must supply a log file location.");
@@ -369,12 +365,12 @@ class Philip
                 $format = "[%datetime% - %level_name%]: %message%";
                 $handler = new StreamHandler($log_path, Logger::DEBUG);
                 $handler->setFormatter(new LineFormatter($format));
-                $this->log->pushHandler($handler);
+                $this['logger']->pushHandler($handler);
             } catch (\Exception $e) {
                 throw \Exception("Unable to open/read log file.");
             }
         } else {
-            $this->log->pushHandler(new NullHandler());
+            $this['logger']->pushHandler(new NullHandler());
         }
     }
 
@@ -387,12 +383,12 @@ class Philip
      */
     private function writePidfile()
     {
-        if (isset($this->config['write_pidfile']) && $this->config['write_pidfile']) {
-            if (!isset($this->config['pidfile'])) {
+        if (isset($this['write_pidfile']) && $this['write_pidfile']) {
+            if (!isset($this['pidfile'])) {
                 throw new \Exception('Please supply a pidfile location.');
             }
 
-            $this->pidfile = $this->config['pidfile'];
+            $this->pidfile = $this['pidfile'];
 
             if ($pidfile = fopen($this->pidfile, 'w')) {
                 fwrite($pidfile, getmypid());
@@ -414,7 +410,7 @@ class Philip
         });
 
         // If an Error message is encountered, just log it for now.
-        $log = $this->log;
+        $log = $this['logger'];
         $errorHandler = new EventListener(null, function($event) use ($log) {
             $log->debug("ERROR: {$event->getRequest()->getMessage()}");
         });
