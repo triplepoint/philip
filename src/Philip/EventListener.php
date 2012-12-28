@@ -23,13 +23,13 @@ use Symfony\Component\EventDispatcher\Event;
 class EventListener
 {
     /** @var string $pattern A RegEx to compare a string against */
-    private $pattern;
+    protected $pattern;
 
     /** @var callable $callback A function to call */
-    private $callback;
+    protected $callback;
 
     /** @var array $matches Matches from testing the $pattern */
-    private $matches;
+    protected $matches;
 
     /**
      * Constructor.
@@ -63,7 +63,7 @@ class EventListener
      *
      * @return boolean True if the pattern matched anything, false otherwise.
      */
-    private function shouldExecuteCallback($msg)
+    protected function shouldExecuteCallback($msg)
     {
         if ($this->pattern) {
             return preg_match($this->pattern, $msg, $this->matches);
@@ -77,7 +77,7 @@ class EventListener
      *
      * @return array The matches
      */
-    private function getMatches()
+    protected function getMatches()
     {
         if (count($this->matches)) {
             return array_slice($this->matches, 1);
