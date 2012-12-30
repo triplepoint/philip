@@ -28,19 +28,19 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 class Philip
 {
     /** @var array $config The bot's configuration */
-    private $config;
+    protected $config;
 
     /** @var resource $socket The socket for communicating with the IRC server */
-    private $socket;
+    protected $socket;
 
     /** @var EventDispatcher $dispatcher The event mediator */
-    private $dispatcher;
+    protected $dispatcher;
 
     /** @var Logger $log The log to write to, if debug is enabled */
-    private $log;
+    protected $log;
 
     /** @var string $pidfile The location to write to, if write_pidfile is enabled */
-    private $pidfile;
+    protected $pidfile;
 
     /**
      * Constructor.
@@ -244,7 +244,7 @@ class Philip
      *
      * @return boolean True if the socket was created successfully
      */
-    private function connect()
+    protected function connect()
     {
         stream_set_blocking(STDIN, 0);
         $this->socket = fsockopen($this->config['hostname'], $this->config['port']);
@@ -254,7 +254,7 @@ class Philip
     /**
      * Logs in to the IRC server with the user info in the config.
      */
-    private function login()
+    protected function login()
     {
         $this->send(Response::nick($this->config['nick']));
         $this->send(Response::user(
@@ -268,7 +268,7 @@ class Philip
     /**
      * Joins the channels specified in the config.
      */
-    private function join()
+    protected function join()
     {
         if (!is_array($this->config['channels'])) {
             $this->config['channels'] = array($this->config['channels']);
@@ -282,7 +282,7 @@ class Philip
     /**
      * Driver of the bot; listens for messages, responds to them accordingly.
      */
-    private function listen()
+    protected function listen()
     {
         do {
             $data = fgets($this->socket, 512);
@@ -318,7 +318,7 @@ class Philip
      * @param string $raw The unparsed incoming IRC message
      * @return Request The parsed message
      */
-    private function receive($raw)
+    protected function receive($raw)
     {
         $this->log->debug('--> ' . $raw);
         return new Request($raw);
@@ -329,7 +329,7 @@ class Philip
      *
      * @param array $responses The responses to send back to the server
      */
-    private function send($responses)
+    protected function send($responses)
     {
         if (!is_array($responses)) {
             $responses = array($responses);
@@ -345,7 +345,7 @@ class Philip
     /**
      * Do some minor initialization work before construction is complete.
      */
-    private function initialize()
+    protected function initialize()
     {
         $this->setupLogger();
         $this->writePidfile();
@@ -355,7 +355,7 @@ class Philip
     /**
      * Sets up the logger, but only if debug is enabled.
      */
-    private function setupLogger()
+    protected function setupLogger()
     {
         $this->log = new Logger('philip');
         if (isset($this->config['debug']) && $this->config['debug'] == true) {
@@ -385,7 +385,7 @@ class Philip
      *                    there's no 'pidfile' location in the configuration
      * @throws \Exception If Philip is unable to open the pidfile for writing
      */
-    private function writePidfile()
+    protected function writePidfile()
     {
         if (isset($this->config['write_pidfile']) && $this->config['write_pidfile']) {
             if (!isset($this->config['pidfile'])) {
@@ -406,7 +406,7 @@ class Philip
     /**
      * Loads default event handlers for basic IRC commands.
      */
-    private function addDefaultHandlers()
+    protected function addDefaultHandlers()
     {
         // When the server PINGs us, just respond with PONG and the server's host
         $pingHandler = new EventListener(null, function($event) {

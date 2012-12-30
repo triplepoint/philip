@@ -18,28 +18,28 @@ namespace Philip\IRC;
 class Request
 {
     // IRC Message Constants
-    private static $PREFIX   = 1;
-    private static $COMMAND  = 2;
-    private static $MIDDLE   = 3;
-    private static $TRAILING = 4;
+    protected static $PREFIX   = 1;
+    protected static $COMMAND  = 2;
+    protected static $MIDDLE   = 3;
+    protected static $TRAILING = 4;
 
     // IRC User Prefix Constants
-    private static $NICK = 1;
-    private static $USER = 2;
-    private static $HOST = 3;
+    protected static $NICK = 1;
+    protected static $USER = 2;
+    protected static $HOST = 3;
 
     // Saves 4 parts: <prefix> <command> <middle params> <trailing param>
-    private static $RE_MSG = '/^(?:[:@]([^\\s]+) )?([^\\s]+)(?: ((?:[^:\\s][^\\s]* ?)*))?(?: ?:(.*))?$/';
+    protected static $RE_MSG = '/^(?:[:@]([^\\s]+) )?([^\\s]+)(?: ((?:[^:\\s][^\\s]* ?)*))?(?: ?:(.*))?$/';
 
     // Saves 3 parts: <nick> <username> <hostname>
-    private static $RE_SENDER = '/^([^!@]+)!(?:[ni]=)?([^@]+)@([^ ]+)$/';
+    protected static $RE_SENDER = '/^([^!@]+)!(?:[ni]=)?([^@]+)@([^ ]+)$/';
 
     // Member Vars
-    private $raw;
-    private $prefix;
-    private $cmd;
-    private $middle;
-    private $trailing;
+    protected $raw;
+    protected $prefix;
+    protected $cmd;
+    protected $middle;
+    protected $trailing;
 
 
     /**
@@ -57,7 +57,7 @@ class Request
 		// Remove newlines and carriage returns
 		$count = count($matches);
 		for($i = $count - 1; $i >= 0; $i--) {
-			$matches[$i] = str_replace(array(chr(10), chr(13)), '', $matches[$i]); 
+			$matches[$i] = str_replace(array(chr(10), chr(13)), '', $matches[$i]);
 		}
 
 		if ($count) {
@@ -160,7 +160,7 @@ class Request
 	 */
     public function isPrivateMessage()
     {
-		return isset($this->middle[0]) && !$this->isChannel($this->middle[0]);	
+		return isset($this->middle[0]) && !$this->isChannel($this->middle[0]);
 	}
 
 	/**
@@ -189,7 +189,7 @@ class Request
 	 * @param string $str The string to test
 	 * @return bool True if the string is a channel name, false otherwise
 	 */
-    private function isChannel($str)
+    protected function isChannel($str)
     {
 		// Channels can start with #, &, !, or + (and have more than 1 of them)
 		return strspn($str, '#&!+', 0, 1) >= 1;

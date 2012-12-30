@@ -20,13 +20,13 @@ use Symfony\Component\EventDispatcher\Event as BaseEvent;
 class Event extends BaseEvent
 {
     /** @var \Philip\IRC\Request $request The request object for this event */
-    private $request;
+    protected $request;
 
     /** @var array $responses Array of responses for the event */
-    private $responses = array();
+    protected $responses = array();
 
     /** @var array $matches Array of matches for the pattern */
-    private $matches = array();
+    protected $matches = array();
 
     /**
      * Constructor.
