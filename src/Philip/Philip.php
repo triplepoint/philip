@@ -274,7 +274,12 @@ class Philip
             $this->config['channels'] = array($this->config['channels']);
         }
 
-        foreach ($this->config['channels'] as $channel) {
+        foreach ($this->config['channels'] as $index => $channel) {
+
+            if (is_string($index)) {
+                $channel = array($index, $channel);
+            }
+
             $this->send(Response::join($channel));
         }
     }
