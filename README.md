@@ -57,8 +57,10 @@ $config = array(
     "username"          => "examplebot",
     "realname"          => "example IRC Bot",
     "nick"              => "examplebot",
-    "channels"          => array( '#example-channel' ),
-    "channel_passwords" => array( 'password-for-example-channel' ),
+    "channels"          => array(
+                               '#example-channel',
+                               array('$example-channel-2' => 'example-password')
+                           ),
     "admins"            => array( 'example' ),
     "debug"             => true,
     "log"               => __DIR__ . '/bot.log',
