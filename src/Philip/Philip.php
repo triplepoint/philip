@@ -274,16 +274,7 @@ class Philip
             $this->config['channels'] = array($this->config['channels']);
         }
 
-        if (array_key_exists('channel_passwords', $this->config) && !is_array($this->config['channel_passwords'])) {
-            $this->config['channel_passwords'] = array($this->config['channel_passwords']);
-        }
-
-        foreach ($this->config['channels'] as $index => $channel) {
-
-            if (array_key_exists('channel_passwords', $this->config) && array_key_exists($index, $this->config['channel_passwords'])) {
-                $channel = array($channel, $this->config['channel_passwords'][$index]);
-            }
-
+        foreach ($this->config['channels'] as $channel) {
             $this->send(Response::join($channel));
         }
     }
